@@ -100,11 +100,11 @@ st.markdown(f"""
 
 # 学校抽出
 df_school = pd.DataFrame(school_data)
-local_schools = df_school[df_school["所在地"].str.contains(selected_ward.replace("区",""))]
+# 修正ポイント: na=False を追加
+local_schools = df_school[df_school["所在地"].str.contains(selected_ward.replace("区",""), na=False)]
 
 if not local_schools.empty:
     st.markdown(f"#### ✨ {selected_ward}内の難関校")
-    # ナンバリングを非表示にして表示
     st.table(local_schools[["順位", "学校名", "偏差値", "カテゴリ", "最寄り"]].assign(blank="").set_index("blank"))
 else:
     st.info(f"※{selected_ward}内に所在する難関校（偏差値60以上）はリスト外です。通学圏内をご確認ください。")
