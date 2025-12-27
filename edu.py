@@ -4,7 +4,7 @@ import pandas as pd
 # 1. ページ設定
 st.set_page_config(page_title="学区・教育環境ナビ", layout="wide")
 
-# CSS: デザイン調整
+# CSS: デザイン調整とテーブルの見た目
 st.markdown("""
     <style>
     header { visibility: hidden; }
@@ -23,6 +23,11 @@ st.markdown("""
         border: 2px solid #e2e8f0;
         margin-bottom: 20px;
     }
+    
+    /* テーブルを綺麗にするCSS */
+    table { width: 100%; border-collapse: collapse; }
+    th { background-color: #f2f2f2; text-align: left; padding: 8px; }
+    td { border-bottom: 1px solid #ddd; padding: 8px; text-align: left; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -53,7 +58,7 @@ school_data = [
     {"順位": 7, "学校名": "三田国際学園", "偏差値": 61, "カテゴリ": "共学", "所在地": "世田谷区", "最寄り": "用賀"},
 ]
 
-# --- データ2: 23区自治体データ ---
+# --- 23区データ ---
 ward_data = [
     {"No": 1, "区": "千代田区", "教育特色": "次世代育成手当が手厚い", "独自支援": "独自の次世代育成手当(月5000円)"},
     {"No": 2, "区": "中央区", "教育特色": "放課後遊び場充実", "独自支援": "新生児祝品(3万円タクシー券等)"},
@@ -80,13 +85,14 @@ ward_data = [
     {"No": 23, "区": "江戸川区", "教育特色": "共育（ともにそだてる）", "独自支援": "乳児養育手当(月1.3万円)"}
 ]
 
-# --- メインロジック ---
+# --- 表示用の関数（インデックスを消すためHTML変換） ---
+def show_custom_table(df):
+    st.write(df.to_html(index=False, escape=False), unsafe_allow_html=True)
 
+# --- メインロジック ---
 st.write("### 📍 エリアを選択してください")
 df_ward = pd.DataFrame(ward_data)
 ward_list = df_ward["区"].tolist()
-
-# 文京区を初期値（index=4）に設定
 selected_ward = st.selectbox("区を選択", ward_list, index=4, label_visibility="collapsed") 
 
 ward_info = df_ward[df_ward["区"] == selected_ward].iloc[0]
@@ -100,14 +106,13 @@ st.markdown(f"""
 
 # 学校抽出
 df_school = pd.DataFrame(school_data)
-# 修正ポイント: na=False を追加
 local_schools = df_school[df_school["所在地"].str.contains(selected_ward.replace("区",""), na=False)]
 
 if not local_schools.empty:
     st.markdown(f"#### ✨ {selected_ward}内の難関校")
-    st.table(local_schools[["順位", "学校名", "偏差値", "カテゴリ", "最寄り"]].assign(blank="").set_index("blank"))
+    show_custom_table(local_schools[["順位", "学校名", "偏差値", "カテゴリ", "最寄り"]])
 else:
-    st.info(f"※{selected_ward}内に所在する難関校（偏差値60以上）はリスト外です。通学圏内をご確認ください。")
+    st.info(f"※{selected_ward}内に所在する難関校（偏差値60以上）はリスト外です。")
 
 st.markdown("---")
 st.write("### 🏆 東京都 難関私立中学 TOP7 一覧")
@@ -117,14 +122,14 @@ col1, col2, col3 = st.columns(3)
 with col1:
     st.markdown('<p style="color:#3498db; font-weight:bold; border-bottom:2px solid #3498db;">🟦 男子校</p>', unsafe_allow_html=True)
     m_df = df_school[df_school["カテゴリ"] == "男子校"].sort_values("順位")[["順位", "学校名", "偏差値"]]
-    st.table(m_df.assign(blank="").set_index("blank"))
+    show_custom_table(m_df)
 
 with col2:
     st.markdown('<p style="color:#e91e63; font-weight:bold; border-bottom:2px solid #e91e63;">🟥 女子校</p>', unsafe_allow_html=True)
     f_df = df_school[df_school["カテゴリ"] == "女子校"].sort_values("順位")[["順位", "学校名", "偏差値"]]
-    st.table(f_df.assign(blank="").set_index("blank"))
+    show_custom_table(f_df)
 
 with col3:
     st.markdown('<p style="color:#9b59b6; font-weight:bold; border-bottom:2px solid #9b59b6;">🟪 共学</p>', unsafe_allow_html=True)
     c_df = df_school[df_school["カテゴリ"] == "共学"].sort_values("順位")[["順位", "学校名", "偏差値"]]
-    st.table(c_df.assign(blank="").set_index("blank"))
+    show_custom_table(c_df)
