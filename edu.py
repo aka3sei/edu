@@ -4,25 +4,23 @@ import pandas as pd
 # 1. ページ設定
 st.set_page_config(page_title="学区・教育環境ナビ", layout="wide")
 
-# CSS: スクロール枠を撤廃し、全表示する設定
+# CSS: デザイン調整
 st.markdown("""
     <style>
     header { visibility: hidden; }
-    /* スクロール制限を解除して全表示 */
     .block-container { padding-top: 1rem !important; overflow: visible !important; }
     
     .main-header { 
         font-size: 24px; font-weight: bold; color: #1a365d; 
         text-align: center; border-bottom: 3px solid #3498db;
-        padding-bottom: 10px; margin-bottom: 20px; 
+        padding-bottom: 10px; margin-bottom: 15px; 
     }
 
-    /* 強調表示用 */
     .highlight-box {
-        background-color: #f0f7ff;
+        background-color: #f8fafc;
         padding: 15px;
-        border-radius: 10px;
-        border: 1px solid #3498db;
+        border-radius: 12px;
+        border: 2px solid #e2e8f0;
         margin-bottom: 20px;
     }
     </style>
@@ -44,8 +42,8 @@ school_data = [
     {"順位": 3, "学校名": "豊島岡女子学園", "偏差値": 68, "カテゴリ": "女子校", "所在地": "豊島区", "最寄り": "池袋"},
     {"順位": 4, "学校名": "雙葉中学校", "偏差値": 67, "カテゴリ": "女子校", "所在地": "千代田区", "最寄り": "四ツ谷"},
     {"順位": 5, "学校名": "白百合学園", "偏差値": 64, "カテゴリ": "女子校", "所在地": "千代田区", "最寄り": "九段下"},
-    {"順位": 6, "学校名": "吉祥女子中学校", "偏差値": 63, "カテゴリ": "女子校", "所在地": "武蔵野市", "最寄り": "吉祥寺"},
-    {"順位": 7, "学校名": "鴎友学園女子", "偏差値": 62, "カテゴリ": "女子校", "所在地": "世田谷区", "最寄り": "宮の坂"},
+    {"順位": 6, "学校名": "吉祥女子中学校", "偏差値": 63, "カテゴリ": "武蔵野市", "最寄り": "吉祥寺"},
+    {"順位": 7, "学校名": "鴎友学園女子", "偏差値": 62, "カテゴリ": "世田谷区", "最寄り": "宮の坂"},
     {"順位": 1, "学校名": "渋谷教育学園渋谷", "偏差値": 70, "カテゴリ": "共学", "所在地": "渋谷区", "最寄り": "渋谷"},
     {"順位": 2, "学校名": "筑波大学附属", "偏差値": 69, "カテゴリ": "共学", "所在地": "文京区", "最寄り": "護国寺"},
     {"順位": 3, "学校名": "広尾学園", "偏差値": 66, "カテゴリ": "共学", "所在地": "港区", "最寄り": "広尾"},
@@ -84,50 +82,49 @@ ward_data = [
 
 # --- メインロジック ---
 
-# 1. 自治体を選択
-st.subheader("📊 23区からエリアを選択")
+st.write("### 📍 エリアを選択してください")
 df_ward = pd.DataFrame(ward_data)
-selected_ward = st.selectbox("詳しく見たい「区」を選んでください", df_ward["区"].tolist(), index=21) # デフォルト葛飾区
+ward_list = df_ward["区"].tolist()
 
-# 2. 選択された区の支援情報を表示
+# 文京区を初期値（index=4）に設定
+selected_ward = st.selectbox("区を選択", ward_list, index=4, label_visibility="collapsed") 
+
 ward_info = df_ward[df_ward["区"] == selected_ward].iloc[0]
 st.markdown(f"""
     <div class="highlight-box">
-        <h2 style="margin-top:0; color:#1a365d;">📍 {selected_ward} の子育て・教育環境</h2>
-        <p><b>教育特色:</b> {ward_info['教育特色']}</p>
-        <p><b>独自支援:</b> {ward_info['独自支援']}</p>
-        <hr>
-        <p style="font-size:12px; color:gray;">※給食費・医療費（18歳まで）は全区ほぼ無償化済みです</p>
+        <h3 style="margin-top:0; color:#1a365d;">{selected_ward} の子育て環境</h3>
+        <p><b>■ 教育特色:</b> {ward_info['教育特色']}</p>
+        <p><b>■ 独自支援:</b> {ward_info['独自支援']}</p>
     </div>
 """, unsafe_allow_html=True)
 
-# 3. その区に関連する「難関私立中学」を表示（または全リスト）
-st.subheader(f"🎓 {selected_ward} 周辺・通学圏内の難関私立中学")
+# 学校抽出
 df_school = pd.DataFrame(school_data)
-
-# エリア連動フィルタリング（所在地が一致するもの）
 local_schools = df_school[df_school["所在地"].str.contains(selected_ward.replace("区",""))]
 
 if not local_schools.empty:
-    st.success(f"{selected_ward}内に所在する難関校が見つかりました")
-    st.table(local_schools[["順位", "学校名", "偏差値", "カテゴリ", "最寄り"]])
+    st.markdown(f"#### ✨ {selected_ward}内の難関校")
+    # ナンバリングを非表示にして表示
+    st.table(local_schools[["順位", "学校名", "偏差値", "カテゴリ", "最寄り"]].assign(blank="").set_index("blank"))
 else:
-    st.info(f"{selected_ward}内に所在する難関校（偏差値60以上）はリスト外ですが、通学圏内の各カテゴリTOP7をチェックしてください")
+    st.info(f"※{selected_ward}内に所在する難関校（偏差値60以上）はリスト外です。通学圏内をご確認ください。")
 
-# 4. 全カテゴリのTOP7を表示（スクロールなし全表示）
 st.markdown("---")
-st.write("### 🏆 難関私立中学 カテゴリ別TOP7 全表示")
+st.write("### 🏆 東京都 難関私立中学 TOP7 一覧")
 
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.markdown('<p style="color:#3498db; font-weight:bold; border-bottom:2px solid #3498db;">🟦 男子校 TOP7</p>', unsafe_allow_html=True)
-    st.table(df_school[df_school["カテゴリ"] == "男子校"].sort_values("順位")[["順位", "学校名", "偏差値"]])
+    st.markdown('<p style="color:#3498db; font-weight:bold; border-bottom:2px solid #3498db;">🟦 男子校</p>', unsafe_allow_html=True)
+    m_df = df_school[df_school["カテゴリ"] == "男子校"].sort_values("順位")[["順位", "学校名", "偏差値"]]
+    st.table(m_df.assign(blank="").set_index("blank"))
 
 with col2:
-    st.markdown('<p style="color:#e91e63; font-weight:bold; border-bottom:2px solid #e91e63;">🟥 女子校 TOP7</p>', unsafe_allow_html=True)
-    st.table(df_school[df_school["カテゴリ"] == "女子校"].sort_values("順位")[["順位", "学校名", "偏差値"]])
+    st.markdown('<p style="color:#e91e63; font-weight:bold; border-bottom:2px solid #e91e63;">🟥 女子校</p>', unsafe_allow_html=True)
+    f_df = df_school[df_school["カテゴリ"] == "女子校"].sort_values("順位")[["順位", "学校名", "偏差値"]]
+    st.table(f_df.assign(blank="").set_index("blank"))
 
 with col3:
-    st.markdown('<p style="color:#9b59b6; font-weight:bold; border-bottom:2px solid #9b59b6;">🟪 共学 TOP7</p>', unsafe_allow_html=True)
-    st.table(df_school[df_school["カテゴリ"] == "共学"].sort_values("順位")[["順位", "学校名", "偏差値"]])
+    st.markdown('<p style="color:#9b59b6; font-weight:bold; border-bottom:2px solid #9b59b6;">🟪 共学</p>', unsafe_allow_html=True)
+    c_df = df_school[df_school["カテゴリ"] == "共学"].sort_values("順位")[["順位", "学校名", "偏差値"]]
+    st.table(c_df.assign(blank="").set_index("blank"))
