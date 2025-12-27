@@ -1,36 +1,37 @@
 import streamlit as st
 import pandas as pd
 
-# ページ設定
-st.set_page_config(page_title="学区・教育環境ガイド", layout="wide")
+# 1. ページ設定
+st.set_page_config(page_title="学区・教育環境ナビ", layout="wide")
 
+# CSS: スクロール枠を撤廃し、全表示する設定
 st.markdown("""
     <style>
     header { visibility: hidden; }
-    .block-container { padding-top: 1rem !important; max-height: 100vh; overflow: hidden; }
+    /* スクロール制限を解除して全表示 */
+    .block-container { padding-top: 1rem !important; overflow: visible !important; }
     
     .main-header { 
-        font-size: 22px; font-weight: bold; color: #1a365d; 
+        font-size: 24px; font-weight: bold; color: #1a365d; 
         text-align: center; border-bottom: 3px solid #3498db;
-        padding-bottom: 5px; margin-bottom: 15px; 
+        padding-bottom: 10px; margin-bottom: 20px; 
     }
 
-    /* ラジオボタンをタブのように大きく */
-    div.stRadio > div {
-        display: flex; justify-content: space-around;
-        background-color: #f0f2f6; padding: 8px; border-radius: 12px;
+    /* 強調表示用 */
+    .highlight-box {
+        background-color: #f0f7ff;
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid #3498db;
+        margin-bottom: 20px;
     }
-    
-    /* 順位バッジの装飾 */
-    .rank-text { font-weight: bold; color: #1a365d; }
     </style>
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="main-header">🏫 学区・教育環境ガイド</div>', unsafe_allow_html=True)
 
-# 7校ずつに揃えた最新データ
+# --- データ1: 私立中学7校×3カテゴリ ---
 school_data = [
-    # --- 男子校 (7校) ---
     {"順位": 1, "学校名": "開成中学校", "偏差値": 72, "カテゴリ": "男子校", "所在地": "荒川区", "最寄り": "西日暮里"},
     {"順位": 2, "学校名": "麻布中学校", "偏差値": 68, "カテゴリ": "男子校", "所在地": "港区", "最寄り": "広尾"},
     {"順位": 3, "学校名": "駒場東邦中学校", "偏差値": 67, "カテゴリ": "男子校", "所在地": "世田谷区", "最寄り": "駒場東大前"},
@@ -38,8 +39,6 @@ school_data = [
     {"順位": 5, "学校名": "海城中学校", "偏差値": 64, "カテゴリ": "男子校", "所在地": "新宿区", "最寄り": "新大久保"},
     {"順位": 6, "学校名": "早稲田中学校", "偏差値": 64, "カテゴリ": "男子校", "所在地": "新宿区", "最寄り": "早稲田"},
     {"順位": 7, "学校名": "本郷中学校", "偏差値": 60, "カテゴリ": "男子校", "所在地": "豊島区", "最寄り": "巣鴨"},
-
-    # --- 女子校 (7校) ---
     {"順位": 1, "学校名": "桜蔭中学校", "偏差値": 71, "カテゴリ": "女子校", "所在地": "文京区", "最寄り": "水道橋"},
     {"順位": 2, "学校名": "女子学院中学校", "偏差値": 69, "カテゴリ": "女子校", "所在地": "千代田区", "最寄り": "市ヶ谷"},
     {"順位": 3, "学校名": "豊島岡女子学園", "偏差値": 68, "カテゴリ": "女子校", "所在地": "豊島区", "最寄り": "池袋"},
@@ -47,8 +46,6 @@ school_data = [
     {"順位": 5, "学校名": "白百合学園", "偏差値": 64, "カテゴリ": "女子校", "所在地": "千代田区", "最寄り": "九段下"},
     {"順位": 6, "学校名": "吉祥女子中学校", "偏差値": 63, "カテゴリ": "女子校", "所在地": "武蔵野市", "最寄り": "吉祥寺"},
     {"順位": 7, "学校名": "鴎友学園女子", "偏差値": 62, "カテゴリ": "女子校", "所在地": "世田谷区", "最寄り": "宮の坂"},
-
-    # --- 共学 (7校) ---
     {"順位": 1, "学校名": "渋谷教育学園渋谷", "偏差値": 70, "カテゴリ": "共学", "所在地": "渋谷区", "最寄り": "渋谷"},
     {"順位": 2, "学校名": "筑波大学附属", "偏差値": 69, "カテゴリ": "共学", "所在地": "文京区", "最寄り": "護国寺"},
     {"順位": 3, "学校名": "広尾学園", "偏差値": 66, "カテゴリ": "共学", "所在地": "港区", "最寄り": "広尾"},
@@ -58,40 +55,79 @@ school_data = [
     {"順位": 7, "学校名": "三田国際学園", "偏差値": 61, "カテゴリ": "共学", "所在地": "世田谷区", "最寄り": "用賀"},
 ]
 
-# メインメニュー
-tab_choice = st.radio("メニュー", ["🎓 難関私立中学リスト", "📈 自治体・教育比較"], horizontal=True, label_visibility="collapsed")
+# --- データ2: 23区自治体データ ---
+ward_data = [
+    {"No": 1, "区": "千代田区", "教育特色": "次世代育成手当が手厚い", "独自支援": "独自の次世代育成手当(月5000円)"},
+    {"No": 2, "区": "中央区", "教育特色": "放課後遊び場充実", "独自支援": "新生児祝品(3万円タクシー券等)"},
+    {"No": 3, "区": "港区", "教育特色": "国際・ICT教育推進", "独自支援": "出産費用助成(最大60万円)"},
+    {"No": 4, "区": "新宿区", "教育特色": "多文化共生教育の推進", "独自支援": "誕生祝品・子育てセット配布"},
+    {"No": 5, "区": "文京区", "教育特色": "国立・私立志向が極めて高い", "独自支援": "教育相談・学習支援が非常に充実"},
+    {"No": 6, "区": "台東区", "教育特色": "GIGAスクール構想", "独自支援": "入学お祝い金制度あり"},
+    {"No": 7, "区": "墨田区", "教育特色": "ものづくり教育の推進", "独自支援": "子育て世帯家賃助成制度"},
+    {"No": 8, "区": "江東区", "教育特色": "土曜塾などの学習支援", "独自支援": "子育て支援アプリでの情報発信"},
+    {"No": 9, "区": "品川区", "教育特色": "小中一貫教育の先駆者", "独自支援": "しながわネウボラ(伴走型支援)"},
+    {"No": 10, "区": "目黒区", "教育特色": "教育の情報化推進", "独自支援": "子育てサロンの充実"},
+    {"No": 11, "区": "大田区", "教育特色": "理数教育の重点化", "独自支援": "ぴよぴよ(子育てひろば)多数"},
+    {"No": 12, "区": "世田谷区", "教育特色": "公立小の教育水準が安定", "独自支援": "児童館・遊び場が23区最多レベル"},
+    {"No": 13, "区": "渋谷区", "教育特色": "1人1台タブレット早期導入", "独自支援": "ハッピーマザー助成金(10万円)"},
+    {"No": 14, "区": "中野区", "教育特色": "ICT教育とプログラミング", "独自支援": "子育て応援ギフトの充実"},
+    {"No": 15, "区": "杉並区", "教育特色": "すぎなみ教育プラン", "独自支援": "すぎなみ子育て応援券配布"},
+    {"No": 16, "区": "豊島区", "教育特色": "待機児童ゼロの継続", "独自支援": "としま子育てマイページ"},
+    {"No": 17, "区": "北区", "教育特色": "子育てするなら北区が一番", "独自支援": "安心ママパパ応援団(家事支援)"},
+    {"No": 18, "区": "荒川区", "教育特色": "読書教育の推進", "独自支援": "あらかわ家族の日(優待制度)"},
+    {"No": 19, "区": "板橋区", "教育特色": "読み聞かせ・絵本教育", "独自支援": "すくすくカード(利用券)"},
+    {"No": 20, "区": "練馬区", "教育特色": "教育の情報化・環境整備", "独自支援": "第3子誕生祝金(10万円)"},
+    {"No": 21, "区": "足立区", "教育特色": "学力定着への手厚い支援", "独自支援": "あだち家庭教育学級"},
+    {"No": 22, "区": "葛飾区", "教育特色": "給食費完全無償・ICT化", "独自支援": "小中学校の改築・耐震化100%"},
+    {"No": 23, "区": "江戸川区", "教育特色": "共育（ともにそだてる）", "独自支援": "乳児養育手当(月1.3万円)"}
+]
 
-if "私立中学" in tab_choice:
-    # 区分選択
-    category = st.radio("学校区分（タップで切り替え）", ["男子校", "女子校", "共学"], horizontal=True)
-    
-    # フィルタリング
-    df = pd.DataFrame(school_data)
-    filtered_df = df[df["カテゴリ"] == category].sort_values("順位")
+# --- メインロジック ---
 
-    # ヘッダーの色分け
-    color = "#3498db" if category == "男子校" else "#e91e63" if category == "女子校" else "#9b59b6"
-    st.markdown(f"""
-        <div style="background-color: {color}; color: white; padding: 10px; border-radius: 10px 10px 0 0; font-weight: bold; text-align: center;">
-            {category} 難関校ランキング TOP 7
-        </div>
-    """, unsafe_allow_html=True)
+# 1. 自治体を選択
+st.subheader("📊 23区からエリアを選択")
+df_ward = pd.DataFrame(ward_data)
+selected_ward = st.selectbox("詳しく見たい「区」を選んでください", df_ward["区"].tolist(), index=21) # デフォルト葛飾区
 
-    # リスト表示
-    st.dataframe(
-        filtered_df[["順位", "学校名", "偏差値", "所在地", "最寄り"]], 
-        use_container_width=True, 
-        hide_index=True, 
-        height=420
-    )
+# 2. 選択された区の支援情報を表示
+ward_info = df_ward[df_ward["区"] == selected_ward].iloc[0]
+st.markdown(f"""
+    <div class="highlight-box">
+        <h2 style="margin-top:0; color:#1a365d;">📍 {selected_ward} の子育て・教育環境</h2>
+        <p><b>教育特色:</b> {ward_info['教育特色']}</p>
+        <p><b>独自支援:</b> {ward_info['独自支援']}</p>
+        <hr>
+        <p style="font-size:12px; color:gray;">※給食費・医療費（18歳まで）は全区ほぼ無償化済みです</p>
+    </div>
+""", unsafe_allow_html=True)
 
+# 3. その区に関連する「難関私立中学」を表示（または全リスト）
+st.subheader(f"🎓 {selected_ward} 周辺・通学圏内の難関私立中学")
+df_school = pd.DataFrame(school_data)
+
+# エリア連動フィルタリング（所在地が一致するもの）
+local_schools = df_school[df_school["所在地"].str.contains(selected_ward.replace("区",""))]
+
+if not local_schools.empty:
+    st.success(f"{selected_ward}内に所在する難関校が見つかりました")
+    st.table(local_schools[["順位", "学校名", "偏差値", "カテゴリ", "最寄り"]])
 else:
-    # 自治体比較
-    st.subheader("主要エリア 子育て・教育支援比較")
-    st.table(pd.DataFrame({
-        "区": ["文京区", "港区", "世田谷区", "葛飾区"],
-        "教育の特色": ["国立・私立志向が極めて高い", "国際教育・ICT活用推進", "公立小の教育水準が安定", "給食費完全無償・ICT化"],
-        "独自支援": ["教育相談が充実", "出産費用助成(最大60万)", "児童館・遊び場が豊富", "小中学校の改築・耐震化"]
-    }))
+    st.info(f"{selected_ward}内に所在する難関校（偏差値60以上）はリスト外ですが、通学圏内の各カテゴリTOP7をチェックしてください")
 
-st.markdown('<p style="font-size:10px; color:gray; text-align:center;">※偏差値は目安です。学校区分ごとにTOP7を掲載中</p>', unsafe_allow_html=True)
+# 4. 全カテゴリのTOP7を表示（スクロールなし全表示）
+st.markdown("---")
+st.write("### 🏆 難関私立中学 カテゴリ別TOP7 全表示")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.markdown('<p style="color:#3498db; font-weight:bold; border-bottom:2px solid #3498db;">🟦 男子校 TOP7</p>', unsafe_allow_html=True)
+    st.table(df_school[df_school["カテゴリ"] == "男子校"].sort_values("順位")[["順位", "学校名", "偏差値"]])
+
+with col2:
+    st.markdown('<p style="color:#e91e63; font-weight:bold; border-bottom:2px solid #e91e63;">🟥 女子校 TOP7</p>', unsafe_allow_html=True)
+    st.table(df_school[df_school["カテゴリ"] == "女子校"].sort_values("順位")[["順位", "学校名", "偏差値"]])
+
+with col3:
+    st.markdown('<p style="color:#9b59b6; font-weight:bold; border-bottom:2px solid #9b59b6;">🟪 共学 TOP7</p>', unsafe_allow_html=True)
+    st.table(df_school[df_school["カテゴリ"] == "共学"].sort_values("順位")[["順位", "学校名", "偏差値"]])
