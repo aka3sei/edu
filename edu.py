@@ -4,7 +4,7 @@ import pandas as pd
 # 1. ページ設定
 st.set_page_config(page_title="学区・教育環境ナビ", layout="wide")
 
-# CSS: デザイン調整とテーブルの見た目
+# CSS: ヘッダーとデータをすべて中央揃えにする設定
 st.markdown("""
     <style>
     header { visibility: hidden; }
@@ -24,10 +24,21 @@ st.markdown("""
         margin-bottom: 20px;
     }
     
-    /* テーブルを綺麗にするCSS */
-    table { width: 100%; border-collapse: collapse; }
-    th { background-color: #f2f2f2; text-align: left; padding: 8px; }
-    td { border-bottom: 1px solid #ddd; padding: 8px; text-align: left; }
+    /* テーブルのスタイルを中央揃えに強制 */
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    th { 
+        background-color: #f2f2f2; 
+        text-align: center !important; /* ヘッダー中央揃え */
+        padding: 10px; 
+        font-size: 14px;
+        border-bottom: 2px solid #ddd;
+    }
+    td { 
+        border-bottom: 1px solid #ddd; 
+        padding: 10px; 
+        text-align: center !important; /* データ中央揃え */
+        font-size: 14px;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -85,9 +96,10 @@ ward_data = [
     {"No": 23, "区": "江戸川区", "教育特色": "共育（ともにそだてる）", "独自支援": "乳児養育手当(月1.3万円)"}
 ]
 
-# --- 表示用の関数（インデックスを消すためHTML変換） ---
-def show_custom_table(df):
-    st.write(df.to_html(index=False, escape=False), unsafe_allow_html=True)
+# --- 表示用の関数（インデックスなし + 全中央揃え） ---
+def show_centered_table(df):
+    # justify='center' を指定し、HTML内での中央揃えを確実にします
+    st.write(df.to_html(index=False, escape=False, justify='center'), unsafe_allow_html=True)
 
 # --- メインロジック ---
 st.write("### 📍 エリアを選択してください")
@@ -110,7 +122,7 @@ local_schools = df_school[df_school["所在地"].str.contains(selected_ward.repl
 
 if not local_schools.empty:
     st.markdown(f"#### ✨ {selected_ward}内の難関校")
-    show_custom_table(local_schools[["順位", "学校名", "偏差値", "カテゴリ", "最寄り"]])
+    show_centered_table(local_schools[["順位", "学校名", "偏差値", "カテゴリ", "最寄り"]])
 else:
     st.info(f"※{selected_ward}内に所在する難関校（偏差値60以上）はリスト外です。")
 
@@ -120,16 +132,16 @@ st.write("### 🏆 東京都 難関私立中学 TOP7 一覧")
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.markdown('<p style="color:#3498db; font-weight:bold; border-bottom:2px solid #3498db;">🟦 男子校</p>', unsafe_allow_html=True)
+    st.markdown('<p style="color:#3498db; font-weight:bold; border-bottom:2px solid #3498db; text-align:center;">🟦 男子校</p>', unsafe_allow_html=True)
     m_df = df_school[df_school["カテゴリ"] == "男子校"].sort_values("順位")[["順位", "学校名", "偏差値"]]
-    show_custom_table(m_df)
+    show_centered_table(m_df)
 
 with col2:
-    st.markdown('<p style="color:#e91e63; font-weight:bold; border-bottom:2px solid #e91e63;">🟥 女子校</p>', unsafe_allow_html=True)
+    st.markdown('<p style="color:#e91e63; font-weight:bold; border-bottom:2px solid #e91e63; text-align:center;">🟥 女子校</p>', unsafe_allow_html=True)
     f_df = df_school[df_school["カテゴリ"] == "女子校"].sort_values("順位")[["順位", "学校名", "偏差値"]]
-    show_custom_table(f_df)
+    show_centered_table(f_df)
 
 with col3:
-    st.markdown('<p style="color:#9b59b6; font-weight:bold; border-bottom:2px solid #9b59b6;">🟪 共学</p>', unsafe_allow_html=True)
+    st.markdown('<p style="color:#9b59b6; font-weight:bold; border-bottom:2px solid #9b59b6; text-align:center;">🟪 共学</p>', unsafe_allow_html=True)
     c_df = df_school[df_school["カテゴリ"] == "共学"].sort_values("順位")[["順位", "学校名", "偏差値"]]
-    show_custom_table(c_df)
+    show_centered_table(c_df)
